@@ -70,12 +70,7 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		return
 	}
-	if storage.CheckDbLenght() <= 1024 {
-		HandleMethodRequest(w, &store)
-	} else {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+	HandleMethodRequest(w, &store)
 }
 
 // HandleMethodRequest handle methods from request body
@@ -121,19 +116,24 @@ func Get(w http.ResponseWriter, store *storage.Storage) {
 
 // Set function set data to Db and write response
 func Set(w http.ResponseWriter, store *storage.Storage) {
-	err := store.Set()
-	if err != nil {
-		store.Error = "key to long"
+	if storage.CheckDbLenght() < 1024 {
+		err := store.Set()
+		if err != nil {
+			store.Error = "key to long"
+		} else {
+			store.Value = ""
+			store.Result = "success"
+		}
+		data, err := json.Marshal(store)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		w.Write(data)
 	} else {
-		store.Value = ""
-		store.Result = "success"
-	}
-	data, err := json.Marshal(store)
-	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	w.Write(data)
 }
 
 // Delete function delete data from Db
