@@ -70,7 +70,12 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		return
 	}
-	HandleMethodRequest(w, &store)
+	if storage.CheckDbLenght() <= 1024 {
+		HandleMethodRequest(w, &store)
+	} else {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 }
 
 // HandleMethodRequest handle methods from request body

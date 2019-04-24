@@ -45,8 +45,12 @@ func (s *Storage) Delete() error {
 	if err != nil {
 		return err
 	}
-	delete(DbStorage, key)
-	return nil
+	if _, ok := DbStorage[key]; ok {
+		delete(DbStorage, key)
+	} else {
+		return fmt.Errorf("value not found")
+	}
+	return fmt.Errorf("value not deleted")
 }
 
 // Exist check is key present in map
@@ -57,4 +61,8 @@ func (s *Storage) Exist() bool {
 	}
 	_, ok := DbStorage[key]
 	return ok
+}
+
+func CheckDbLenght() int {
+	return len(DbStorage)
 }
