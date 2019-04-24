@@ -63,6 +63,7 @@ func (s *Storage) Exist() bool {
 	return ok
 }
 
+// CheckDbLenght return value of keys in DbStorage
 func CheckDbLenght() int {
 	return len(DbStorage)
 }
