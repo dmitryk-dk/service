@@ -73,7 +73,7 @@ func Values(w http.ResponseWriter, r *http.Request) {
 	HandleMethodRequest(w, &store)
 }
 
-// Handle methods from request
+// HandleMethodRequest handle methods from request body
 func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
 	switch store.Method {
 	case "get":
