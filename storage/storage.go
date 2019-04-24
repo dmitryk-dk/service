@@ -50,7 +50,7 @@ func (s *Storage) Delete() error {
 	} else {
 		return fmt.Errorf("value not found")
 	}
-	return fmt.Errorf("value not deleted")
+	return nil
 }
 
 // Exist check is key present in map
