@@ -74,7 +74,7 @@ func Values(w http.ResponseWriter, r *http.Request) {
 // Get function write response on get method
 func Get(w http.ResponseWriter, store *storage.Storage) {
 	val, err := store.Get()
-	if err != nil {
+	if err != nil || val == "" {
 		store.Error = "Value not found"
 	} else {
 		if store.Method != "exist" {
