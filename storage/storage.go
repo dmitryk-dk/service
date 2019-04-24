@@ -1,46 +1,51 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 )
 
 type Storage struct {
-	Method string
-	Value  []byte
-	Key    string
-	Error  string
-	Result string
+	Method string `json:"method"`
+	Value  string `json:"value,omitempty"`
+	Key    string `json:"key"`
+	Error  string `json:"error,omitempty"`
+	Result string `json:"result,omitempty"`
 }
 
 var DbStorage = map[uuid.UUID]string{}
 
 // Set function save data to storage
-func (s *Storage) Set() bool {
+func (s *Storage) Set() error {
+	if len(s.Key) > 16 {
+		return fmt.Errorf("length of key too long")
+	}
 	key, err := uuid.FromBytes([]byte(s.Key))
 	if err != nil {
-		return false
+		return err
 	}
-	DbStorage[key] = string(s.Value)
-	return true
+	DbStorage[key] = s.Value
+	return nil
 }
 
 // Get function recieve data from storage
-func (s *Storage) Get() string {
+func (s *Storage) Get() (string, error) {
 	key, err := uuid.FromBytes([]byte(s.Key))
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return DbStorage[key]
+	return DbStorage[key], nil
 }
 
 // Delete function remove data from storage
-func (s *Storage) Delete() bool {
+func (s *Storage) Delete() error {
 	key, err := uuid.FromBytes([]byte(s.Key))
 	if err != nil {
-		return false
+		return err
 	}
 	delete(DbStorage, key)
-	return true
+	return nil
 }
 
 // Exist check is key present in map
@@ -52,12 +57,3 @@ func (s *Storage) Exist() bool {
 	_, ok := DbStorage[key]
 	return ok
 }
-
-// type storageError struct {
-// 	errType string
-// 	err     error
-// }
-
-// func (e *storageError) Error() string {
-// 	return fmt.Sprintf("[%s : %s ]", e.errType, e.err.Error())
-// }

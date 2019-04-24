@@ -58,18 +58,68 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error json format", http.StatusInternalServerError)
 		return
 	}
-	if store.Exist() {
-		switch store.Method {
-		case "GET":
-			store.Get()
-		case "SET":
-			store.Set()
-		case "DELETE":
-			store.Delete()
-		default:
-			store.Exist()
-		}
+
+	switch store.Method {
+	case "get":
+		Get(w, &store)
+	case "set":
+		Set(w, &store)
+	case "delete":
+		Delete(w, &store)
+	case "exist":
+		Get(w, &store)
 	}
+}
+
+// Get function write response on get method
+func Get(w http.ResponseWriter, store *storage.Storage) {
+	val, err := store.Get()
+	if err != nil {
+		store.Error = "Value not found"
+	} else {
+		if store.Method != "exist" {
+			store.Value = val
+		}
+		store.Result = "success"
+	}
+	data, err := json.Marshal(store)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
+}
+
+// Set function set data to Db and write response
+func Set(w http.ResponseWriter, store *storage.Storage) {
+	err := store.Set()
+	if err != nil {
+		store.Error = "key to long"
+	} else {
+		store.Result = "success"
+	}
+	data, err := json.Marshal(store)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
+}
+
+// Delete function delete data from Db
+func Delete(w http.ResponseWriter, store *storage.Storage) {
+	err := store.Delete()
+	if err != nil {
+		store.Error = "Value not found"
+	} else {
+		store.Result = "success"
+	}
+	data, err := json.Marshal(store)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
 }
 
 // PrepareShutdown prepare server to shutdown

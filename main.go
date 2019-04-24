@@ -15,5 +15,4 @@ func main() {
 	server.PrepareShutdown()
 	srv := server.NewConfig(host, port)
 	srv.ListenAndServ()
-
 }
