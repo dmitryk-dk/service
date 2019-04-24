@@ -58,6 +58,18 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error json format", http.StatusInternalServerError)
 		return
 	}
+	err = CheckValueLength(w, &store)
+	if err != nil {
+		store.Error = "Value too long"
+		store.Value = ""
+		data, err := json.Marshal(store)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		w.Write(data)
+		return
+	}
 
 	switch store.Method {
 	case "get":
@@ -69,6 +81,14 @@ func Values(w http.ResponseWriter, r *http.Request) {
 	case "exist":
 		Get(w, &store)
 	}
+}
+
+// CheckValueLength define value lenght and if it more than 512 byte return error
+func CheckValueLength(w http.ResponseWriter, store *storage.Storage) error {
+	if len(store.Value) > 512 {
+		return fmt.Errorf("value length too much")
+	}
+	return nil
 }
 
 // Get function write response on get method
