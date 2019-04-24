@@ -70,17 +70,25 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		return
 	}
+	HandleMethodRequest(w, &store)
+}
 
-	switch store.Method {
-	case "get":
-		Get(w, &store)
-	case "set":
-		Set(w, &store)
-	case "delete":
-		Delete(w, &store)
-	case "exist":
-		Get(w, &store)
-	}
+// Handle methods from request
+func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
+	store.WaitGr.Add(1)
+	go func() {
+		switch store.Method {
+		case "get":
+			Get(w, store)
+		case "set":
+			Set(w, store)
+		case "delete":
+			Delete(w, store)
+		case "exist":
+			Get(w, store)
+		}
+	}()
+	store.WaitGr.Wait()
 }
 
 // CheckValueLength define value lenght and if it more than 512 byte return error
@@ -108,6 +116,7 @@ func Get(w http.ResponseWriter, store *storage.Storage) {
 		return
 	}
 	w.Write(data)
+	store.WaitGr.Done()
 }
 
 // Set function set data to Db and write response
@@ -116,6 +125,7 @@ func Set(w http.ResponseWriter, store *storage.Storage) {
 	if err != nil {
 		store.Error = "key to long"
 	} else {
+		store.Value = ""
 		store.Result = "success"
 	}
 	data, err := json.Marshal(store)
@@ -124,6 +134,7 @@ func Set(w http.ResponseWriter, store *storage.Storage) {
 		return
 	}
 	w.Write(data)
+	store.WaitGr.Done()
 }
 
 // Delete function delete data from Db
@@ -140,6 +151,7 @@ func Delete(w http.ResponseWriter, store *storage.Storage) {
 		return
 	}
 	w.Write(data)
+	store.WaitGr.Done()
 }
 
 // PrepareShutdown prepare server to shutdown
