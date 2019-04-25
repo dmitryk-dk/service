@@ -1,10 +1,12 @@
 package storage
 
-import (
-	"fmt"
+type errorString struct {
+	s string
+}
 
-	"github.com/google/uuid"
-)
+func (e *errorString) Error() string {
+	return e.s
+}
 
 type Storage struct {
 	Method string `json:"method"`
@@ -14,53 +16,70 @@ type Storage struct {
 	Result string `json:"result,omitempty"`
 }
 
-var DbStorage = map[uuid.UUID]string{}
+var DbStorage = map[string]string{}
 
 // Set function save data to storage
-func (s *Storage) Set() error {
-	if len(s.Key) > 16 {
-		return fmt.Errorf("length of key too long")
+func (s *Storage) Set() string {
+	var errStr errorString
+	errStr.s = CheckKeyLenght(s.Key)
+	if errStr.s != "" {
+		return errStr.Error()
 	}
-	key, err := uuid.FromBytes([]byte(s.Key))
-	if err != nil {
-		return err
-	}
-	DbStorage[key] = s.Value
-	return nil
+	DbStorage[s.Key] = s.Value
+	return ""
 }
 
 // Get function recieve data from storage
-func (s *Storage) Get() (string, error) {
-	key, err := uuid.FromBytes([]byte(s.Key))
-	if err != nil {
-		return "", err
+func (s *Storage) Get() (bool, string) {
+	var errStr errorString
+	errStr.s = CheckKeyLenght(s.Key)
+	if errStr.s != "" {
+		return false, errStr.Error()
 	}
-	value := DbStorage[key]
-	return value, nil
+	if _, ok := DbStorage[s.Key]; ok {
+		return true, DbStorage[s.Key]
+	}
+	return false, ""
 }
 
 // Delete function remove data from storage
-func (s *Storage) Delete() error {
-	key, err := uuid.FromBytes([]byte(s.Key))
-	if err != nil {
-		return err
+func (s *Storage) Delete() string {
+	var errStr errorString
+	errStr.s = CheckKeyLenght(s.Key)
+	if errStr.s != "" {
+		return errStr.Error()
 	}
-	if _, ok := DbStorage[key]; ok {
-		delete(DbStorage, key)
-	} else {
-		return fmt.Errorf("value not found")
+	if _, ok := DbStorage[s.Key]; ok {
+		delete(DbStorage, s.Key)
+		return "success"
 	}
-	return nil
+	errStr.s = "value not found"
+	return errStr.Error()
 }
 
 // Exist check is key present in map
-func (s *Storage) Exist() (bool, error) {
-	key, err := uuid.FromBytes([]byte(s.Key))
-	if err != nil {
-		return false, err
+func (s *Storage) Exist() (bool, string) {
+	var errStr errorString
+	errStr.s = CheckKeyLenght(s.Key)
+	if errStr.s != "" {
+		return false, errStr.Error()
 	}
-	_, ok := DbStorage[key]
-	return ok, nil
+	_, ok := DbStorage[s.Key]
+	if !ok {
+		errStr.s = "value not found"
+		return false, errStr.Error()
+	}
+	return ok, ""
+}
+
+func CheckKeyLenght(key string) string {
+	if len(key) > 16 {
+		return "key too long"
+	}
+	if len(key) == 0 {
+		return "key not set"
+	}
+	return ""
 }
 
 // CheckDbLenght return value of keys in DbStorage

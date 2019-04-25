@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 type testStorageStruct struct {
@@ -16,31 +14,43 @@ type testStorageStruct struct {
 }
 
 var testSetData = []testStorageStruct{
-	{"set", "some_value", "qwert", "invalid UUID (got 5 bytes)"},
-	{"set", "some_value", "", "invalid UUID (got 0 bytes)"},
-	{"set", "", "qwertyuiopasdfga", ""},
-	{"set", "some_value", "qwertyuiopasdfgh", ""},
-	{"set", "", "qwertyuiopasdfghaa", "length of key too long"},
-	{"set", "some_value", "qwertyuiopasdfghaa", "length of key too long"},
+	testStorageStruct{"set", "my_value_for_empty_key", "", "key not set"},
+	testStorageStruct{"set", "my_value_for_long_key", "my_very_long_key_10000000", "key too long"},
+	testStorageStruct{"set", "my_value_for_key_1", "my_key_1", ""},
+	testStorageStruct{"set", "", "my_key_2", ""},
 }
 
 var testGetData = []testStorageStruct{
-	{"set", "some_value", "qwert", "invalid UUID (got 5 bytes)"},
-	{"set", "some_value", "", "invalid UUID (got 0 bytes)"},
-	{"set", "", "qwertyuiopasdfga", ""},
-	{"set", "some_value", "qwertyuiopasdfgh", ""},
-	{"set", "", "qwertyuiopasdfghaa", "invalid UUID (got 18 bytes)"},
-	{"set", "some_value", "qwertyuiopasdfghaa", "invalid UUID (got 18 bytes)"},
+	testStorageStruct{"set", "my_value_for_empty_key", "", "key not set"},
+	testStorageStruct{"set", "my_value_for_key_1", "my_key_1", "my_value_for_key_1"},
+	testStorageStruct{"set", "", "my_key_2", "value not found"},
+	testStorageStruct{"set", "", "qwertyuiopasdfghaa", "key too long"},
+	testStorageStruct{"set", "some_value", "qwertyuiopasdfghaa", "key too long"},
 }
 
-func ErrorContains(out error, want string) bool {
-	if out == nil {
+var testExistData = []testStorageStruct{
+	testStorageStruct{"set", "my_value_for_empty_key", "", "key not set"},
+	testStorageStruct{"set", "my_value_for_key_1", "my_key_1", ""},
+	testStorageStruct{"set", "", "my_key_2", "value not found"},
+	testStorageStruct{"set", "", "qwertyuiopasdfghaa", "key too long"},
+	//testStorageStruct{"set", "some_value", "qwertyuiopasdfghaa", "key too long"},
+}
+
+var testDeleteData = []testStorageStruct{
+	testStorageStruct{"set", "my_value_for_empty_key", "", "key not set"},
+	testStorageStruct{"set", "my_value_for_long_key", "my_very_long_key_10000000", "key too long"},
+	testStorageStruct{"set", "my_value_for_key_1", "my_key_1", ""},
+	testStorageStruct{"set", "", "my_key_2", "value not found"},
+}
+
+func ErrorContains(out string, want string) bool {
+	if out == "" {
 		return want == ""
 	}
 	if want == "" {
 		return false
 	}
-	return strings.Contains(out.Error(), want)
+	return strings.Contains(out, want)
 }
 func TestSet(t *testing.T) {
 	checkSet := func(t *testing.T, data testStorageStruct) {
@@ -50,104 +60,103 @@ func TestSet(t *testing.T) {
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		err := store.Set()
-		if !ErrorContains(err, data.Error) {
-			t.Error("Invalid keys length set")
+		errStr := store.Set()
+		if errStr != data.Error {
+			t.Errorf("errStr '%v'; data.Error '%v';", errStr, data.Error)
 		}
-		if err == nil {
-			key, _ := uuid.FromBytes([]byte(data.Key))
-			if DbStorage[key] != data.Value {
-				t.Error("Data not set in DbStorage")
+		if errStr == "" {
+			if DbStorage[data.Key] != data.Value {
+				t.Errorf("DbStorage value '%v'; test data value '%v'", DbStorage[data.Key], data.Value)
 			}
 		}
 	}
 	for _, v := range testSetData {
-		t.Run("set", func(t *testing.T) {
+		t.Run("Run test for Set method", func(t *testing.T) {
 			checkSet(t, v)
 		})
 	}
 	if CheckDbLenght() != 2 {
-		t.Error("Db length not equal")
+		t.Errorf("Db length was: '%v'; want: '%d'", CheckDbLenght(), 2)
 	}
 	fmt.Printf("** TestSet - ALL PASSED (number of test cases: %d)**\n", len(testSetData))
 }
 
 func TestGet(t *testing.T) {
-	checkSet := func(t *testing.T, data testStorageStruct) {
+	checkGet := func(t *testing.T, data testStorageStruct) {
 		t.Helper()
 		store := &Storage{
 			Method: data.Method,
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		value, err := store.Get()
-		if err != nil {
-			if !ErrorContains(err, data.Error) {
-				t.Errorf("%s", err)
+		_, value := store.Get()
+		if value != "" {
+			if !ErrorContains(value, data.Error) {
+				t.Errorf("%s", value)
 			}
 		}
-		if err == nil {
+		if value == "" {
 			if value != data.Value {
-				t.Error("Value from db not equal")
+				t.Errorf("Value getted from db '%v'; value from test '%v", value, data.Value)
 			}
 		}
 	}
 	for _, v := range testGetData {
-		t.Run("set", func(t *testing.T) {
-			checkSet(t, v)
+		t.Run("Run test for Get method", func(t *testing.T) {
+			checkGet(t, v)
 		})
 	}
 	fmt.Printf("** TestGet - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
 }
 
 func TestExist(t *testing.T) {
-	checkSet := func(t *testing.T, data testStorageStruct) {
+	checkExist := func(t *testing.T, data testStorageStruct) {
 		t.Helper()
 		store := &Storage{
 			Method: data.Method,
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		_, err := store.Exist()
-		if err != nil {
-			if !ErrorContains(err, data.Error) {
-				t.Errorf("%s", err)
+		ok, errStr := store.Exist()
+		if errStr != "" && errStr != data.Error {
+			t.Errorf("errStr '%v'; data.Error '%v'; key '%v'", errStr, data.Error, data.Key)
+		}
+		if errStr == "" {
+			if !ok {
+				t.Errorf("Value not found in db check method exist '%v'", ok)
 			}
 		}
 	}
-	for _, v := range testGetData {
-		t.Run("set", func(t *testing.T) {
-			checkSet(t, v)
+	for _, v := range testExistData {
+		t.Run("Run tests for Exist Method", func(t *testing.T) {
+			checkExist(t, v)
 		})
 	}
 	fmt.Printf("** TestDelete - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
 }
 
 func TestDelete(t *testing.T) {
-	checkSet := func(t *testing.T, data testStorageStruct) {
+	checkDelete := func(t *testing.T, data testStorageStruct) {
 		t.Helper()
 		store := &Storage{
 			Method: data.Method,
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		err := store.Delete()
-		if err != nil {
-			if !ErrorContains(err, data.Error) {
-				t.Errorf("%s", err)
-			}
+		errStr := store.Delete()
+		if errStr != "success" && errStr != data.Error {
+			t.Errorf("errStr '%v'; data.Error '%v';", errStr, data.Error)
 		}
-		if err == nil {
-			key, _ := uuid.FromBytes([]byte(data.Key))
-			if _, ok := DbStorage[key]; ok {
+		if errStr == "" {
+			if _, ok := DbStorage[data.Key]; ok {
 				t.Error("Method delete not remove data from Db")
 			}
 		}
 	}
-	for _, v := range testGetData {
-		t.Run("set", func(t *testing.T) {
-			checkSet(t, v)
+	for _, v := range testDeleteData {
+		t.Run("Run test for Exist Method", func(t *testing.T) {
+			checkDelete(t, v)
 		})
 	}
-	fmt.Printf("** TestDelete - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
+	fmt.Printf("** TestExist - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
 }
