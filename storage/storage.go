@@ -39,7 +39,8 @@ func (s *Storage) Get() (bool, string) {
 	if _, ok := DbStorage[s.Key]; ok {
 		return true, DbStorage[s.Key]
 	}
-	return false, ""
+	errStr.s = "value not found"
+	return false, errStr.Error()
 }
 
 // Delete function remove data from storage
