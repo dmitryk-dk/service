@@ -75,9 +75,11 @@ func TestSet(t *testing.T) {
 			checkSet(t, v)
 		})
 	}
-	if CheckDbLenght() != 2 {
-		t.Errorf("Db length was: '%v'; want: '%d'", CheckDbLenght(), 2)
-	}
+	t.Run("run test for check DBLength", func(t *testing.T) {
+		if CheckDbLenght() != 2 {
+			t.Errorf("Db length was: '%v'; want: '%d'", CheckDbLenght(), 2)
+		}
+	})
 	fmt.Printf("** TestSet - ALL PASSED (number of test cases: %d)**\n", len(testSetData))
 }
 
@@ -143,7 +145,7 @@ func TestDelete(t *testing.T) {
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		errStr := store.Delete()
+		_, errStr := store.Delete()
 		if errStr != "success" && errStr != data.Error {
 			t.Errorf("errStr '%v'; data.Error '%v';", errStr, data.Error)
 		}

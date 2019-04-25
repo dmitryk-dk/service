@@ -43,18 +43,18 @@ func (s *Storage) Get() (bool, string) {
 }
 
 // Delete function remove data from storage
-func (s *Storage) Delete() string {
+func (s *Storage) Delete() (bool, string) {
 	var errStr errorString
 	errStr.s = CheckKeyLenght(s.Key)
 	if errStr.s != "" {
-		return errStr.Error()
+		return false, errStr.Error()
 	}
 	if _, ok := DbStorage[s.Key]; ok {
 		delete(DbStorage, s.Key)
-		return "success"
+		return true, "success"
 	}
 	errStr.s = "value not found"
-	return errStr.Error()
+	return false, errStr.Error()
 }
 
 // Exist check is key present in map
