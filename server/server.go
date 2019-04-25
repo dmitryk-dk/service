@@ -18,6 +18,17 @@ type Server struct {
 	Port int
 }
 
+// ListenAndServ function run http server
+func (s *Server) ListenAndServ() {
+	addr := fmt.Sprintf("%s:%d", s.Host, s.Port)
+	fmt.Printf("Server start in addr: %s", addr)
+	err := http.ListenAndServe(addr, nil)
+
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
 // NewConfig server constructor
 func NewConfig(host *string, port *int) *Server {
 	return &Server{
@@ -60,7 +71,7 @@ func Values(w http.ResponseWriter, r *http.Request) {
 	}
 	err = CheckValueLength(w, &store)
 	if err != nil {
-		store.Error = "Value too long"
+		store.Error = "value too long"
 		store.Value = ""
 		data, err := json.Marshal(store)
 		if err != nil {
@@ -90,21 +101,21 @@ func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
 // CheckValueLength define value lenght and if it more than 512 byte return error
 func CheckValueLength(w http.ResponseWriter, store *storage.Storage) error {
 	if len(store.Value) > 512 {
-		return fmt.Errorf("value length too much")
+		return fmt.Errorf("value length too long")
 	}
 	return nil
 }
 
 // Get function write response on get method
 func Get(w http.ResponseWriter, store *storage.Storage) {
-	val, err := store.Get()
-	if err != nil || val == "" {
-		store.Error = "Value not found"
+	ok, val := store.Get()
+	if !ok {
+		store.Error = val
 	} else {
+		store.Value = val
 		if store.Method != "exist" {
 			store.Value = val
 		}
-		store.Result = "success"
 	}
 	data, err := json.Marshal(store)
 	if err != nil {
@@ -117,9 +128,10 @@ func Get(w http.ResponseWriter, store *storage.Storage) {
 // Set function set data to Db and write response
 func Set(w http.ResponseWriter, store *storage.Storage) {
 	if storage.CheckDbLenght() < 1024 {
-		err := store.Set()
-		if err != nil {
-			store.Error = "key to long"
+		errStr := store.Set()
+		if errStr != "" {
+			store.Error = errStr
+			store.Value = ""
 		} else {
 			store.Value = ""
 			store.Result = "success"
@@ -138,9 +150,9 @@ func Set(w http.ResponseWriter, store *storage.Storage) {
 
 // Delete function delete data from Db
 func Delete(w http.ResponseWriter, store *storage.Storage) {
-	err := store.Delete()
-	if err != nil {
-		store.Error = "Value not found"
+	errStr := store.Delete()
+	if errStr != "" {
+		store.Error = errStr
 	} else {
 		store.Result = "success"
 	}
@@ -162,15 +174,4 @@ func PrepareShutdown() {
 		log.Printf("Got signal %d", <-sig)
 		os.Exit(0)
 	}()
-}
-
-// ListenAndServ function run http server
-func (s *Server) ListenAndServ() {
-	addr := fmt.Sprintf("%s:%d", s.Host, s.Port)
-	fmt.Printf("Server start in addr: %s", addr)
-	err := http.ListenAndServe(addr, nil)
-
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
 }
