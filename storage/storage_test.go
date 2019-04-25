@@ -132,7 +132,7 @@ func TestExist(t *testing.T) {
 			checkExist(t, v)
 		})
 	}
-	fmt.Printf("** TestDelete - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
+	fmt.Printf("** TestExist - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
 }
 
 func TestDelete(t *testing.T) {
@@ -154,9 +154,9 @@ func TestDelete(t *testing.T) {
 		}
 	}
 	for _, v := range testDeleteData {
-		t.Run("Run test for Exist Method", func(t *testing.T) {
+		t.Run("Run test for Delete Method", func(t *testing.T) {
 			checkDelete(t, v)
 		})
 	}
-	fmt.Printf("** TestExist - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
+	fmt.Printf("** TestDelete - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
 }
