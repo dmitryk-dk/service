@@ -54,13 +54,13 @@ func (s *Storage) Delete() error {
 }
 
 // Exist check is key present in map
-func (s *Storage) Exist() bool {
+func (s *Storage) Exist() (bool, error) {
 	key, err := uuid.FromBytes([]byte(s.Key))
 	if err != nil {
-		return false
+		return false, err
 	}
 	_, ok := DbStorage[key]
-	return ok
+	return ok, nil
 }
 
 // CheckDbLenght return value of keys in DbStorage
