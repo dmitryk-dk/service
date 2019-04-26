@@ -69,7 +69,7 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error json format", http.StatusInternalServerError)
 		return
 	}
-	err = CheckValueLength(w, &store)
+	err = CheckValueLength(&store)
 	if err != nil {
 		store.Error = "value too long"
 		store.Value = ""
@@ -99,7 +99,7 @@ func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
 }
 
 // CheckValueLength define value lenght and if it more than 512 byte return error
-func CheckValueLength(w http.ResponseWriter, store *storage.Storage) error {
+func CheckValueLength(store *storage.Storage) error {
 	if len(store.Value) > 512 {
 		return fmt.Errorf("value length too long")
 	}
@@ -150,8 +150,8 @@ func Set(w http.ResponseWriter, store *storage.Storage) {
 
 // Delete function delete data from Db
 func Delete(w http.ResponseWriter, store *storage.Storage) {
-	errStr := store.Delete()
-	if errStr != "" {
+	ok, errStr := store.Delete()
+	if !ok {
 		store.Error = errStr
 	} else {
 		store.Result = "success"
