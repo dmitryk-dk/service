@@ -69,9 +69,9 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error json format", http.StatusInternalServerError)
 		return
 	}
-	err = CheckValueLength(&store)
-	if err != nil {
-		store.Error = "value too long"
+	ok := store.CheckValueLength(512)
+	if !ok {
+		store.Error = storage.ErrValueTooLong
 		store.Value = ""
 		data, err := json.Marshal(store)
 		if err != nil {
@@ -94,30 +94,14 @@ func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
 	case "delete":
 		Delete(w, store)
 	case "exist":
-		Get(w, store)
+		Exist(w, store)
 	}
-}
-
-// CheckValueLength define value lenght and if it more than 512 byte return error
-func CheckValueLength(store *storage.Storage) error {
-	if len(store.Value) > 512 {
-		return fmt.Errorf("value length too long")
-	}
-	return nil
 }
 
 // Get function write response on get method
 func Get(w http.ResponseWriter, store *storage.Storage) {
-	ok, val := store.Get()
-	if !ok {
-		store.Error = val
-	} else {
-		store.Value = val
-		if store.Method != "exist" {
-			store.Value = val
-		}
-	}
-	data, err := json.Marshal(store)
+	sendingData := store.Get()
+	data, err := json.Marshal(sendingData)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -127,16 +111,9 @@ func Get(w http.ResponseWriter, store *storage.Storage) {
 
 // Set function set data to Db and write response
 func Set(w http.ResponseWriter, store *storage.Storage) {
-	if storage.CheckDbLenght() < 1024 {
-		errStr := store.Set()
-		if errStr != "" {
-			store.Error = errStr
-			store.Value = ""
-		} else {
-			store.Value = ""
-			store.Result = "success"
-		}
-		data, err := json.Marshal(store)
+	if store.CheckDbLenght() < 1024 {
+		sendingData := store.Set()
+		data, err := json.Marshal(sendingData)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -150,13 +127,19 @@ func Set(w http.ResponseWriter, store *storage.Storage) {
 
 // Delete function delete data from Db
 func Delete(w http.ResponseWriter, store *storage.Storage) {
-	ok, errStr := store.Delete()
-	if !ok {
-		store.Error = errStr
-	} else {
-		store.Result = "success"
+	sendingData := store.Delete()
+	data, err := json.Marshal(sendingData)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
-	data, err := json.Marshal(store)
+	w.Write(data)
+}
+
+// Exist function check if key present in db
+func Exist(w http.ResponseWriter, store *storage.Storage) {
+	sendingData := store.Exist()
+	data, err := json.Marshal(sendingData)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
