@@ -70,7 +70,7 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ok := store.CheckValueLength(512)
-	if !ok {
+	if ok {
 		store.Error = storage.ErrValueTooLong
 		store.Value = ""
 		data, err := json.Marshal(store)
