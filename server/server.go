@@ -71,7 +71,7 @@ func Values(w http.ResponseWriter, r *http.Request) {
 	}
 	ok := store.CheckValueLength(512)
 	if !ok {
-		store.Error = "value too long"
+		store.Error = storage.ErrValueTooLong
 		store.Value = ""
 		data, err := json.Marshal(store)
 		if err != nil {
@@ -94,7 +94,7 @@ func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
 	case "delete":
 		Delete(w, store)
 	case "exist":
-		Get(w, store)
+		Exist(w, store)
 	}
 }
 
@@ -128,6 +128,17 @@ func Set(w http.ResponseWriter, store *storage.Storage) {
 // Delete function delete data from Db
 func Delete(w http.ResponseWriter, store *storage.Storage) {
 	sendingData := store.Delete()
+	data, err := json.Marshal(sendingData)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
+}
+
+// Exist function check if key present in db
+func Exist(w http.ResponseWriter, store *storage.Storage) {
+	sendingData := store.Exist()
 	data, err := json.Marshal(sendingData)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

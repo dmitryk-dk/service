@@ -118,26 +118,6 @@ var testHandleResponse = []storage.Storage{
 	storage.Storage{Method: "delete", Key: "my_new_key_1", Result: "success"},
 }
 
-var long512String = `asdhgahsdjahsdjahdahsdahsghgdsjfhasdjfhgajhsdgfj
-kahsdgfjahsgdfjhasgdfjhgasjfhgashdgakshgdakjhsgdjahdsgf
-jhagsdfjhgajskhdgfkajshdgfkahjsgdkjfhagsdkjhfgkashdgfkah
-sgdfkjhagsdkfhgajhdgjjahgsdfjhgasdjfhgasjhdgfajhsgdfkjhasgdas
-fjhgaksdhjgfashdfglSJFGALSDHJFGAJSHFGasjhdgfkahjsgdfkhagsdkj
-fhgakshjdfgkahsgdfkhagskdfhgakjshdgfkjahgsdkfhagskdfhg
-akjshdgfkjahfasdfjhagsdfkjhgaksjdhgfkajhsgdfkjhasgdfkjhgask
-jdhfgkjashgdfkjahsgdfkjhgaskdjfhgkajshdgfkjahsgdfkjhagjsdfgasdfash
-dfgkjasghdfjkhagskdjfhgakjshdgfkjhagsdkfjhgak`
-
-var longString = `asdhgahsdjahsdjahdahsdahsghgdsjfhasdjfhgajhsdgfj
-kahsdgfjahsgdfjhasgdfjhgasjfhgashdgakshgdakjhsgdjahdsgf
-jhagsdfjhgajskhdgfkajshdgfkahjsgdkjfhagsdkjhfgkashdgfkah
-sgdfkjhagsdkfhgajhdgjjahgsdfjhgasdjfhgasjhdgfajhsgdfkjhasgdas
-fjhgaksdhjgfashdfglSJFGALSDHJFGAJSHFGasjhdgfkahjsgdfkhagsdkj
-fhgakshjdfgkahsgdfkhagskdfhgakjshdgfkjahgsdkfhagskdfhg
-akjshdgfkjahfasdfjhagsdfkjhgaksjdhgfkajhsgdfkjhasgdfkjhgask
-jdhfgkjashgdfkjahsgdfkjhgaskdjfhgkajshdgfkjahsgdfkjhagjsdfgasdfash
-dfgkjasghdfjkhagskdjfhgakjshdgfkjhagsdkfjhgakjshdfgkj_`
-
 func buildUrl(scheme, host string, port int) string {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	return scheme + "://" + addr
@@ -256,28 +236,6 @@ func TestDeleteMethod(t *testing.T) {
 	t.Run("Run test for Delete Method", func(t *testing.T) {
 		for idx, v := range testDeleteRequest {
 			checkDelete(t, v, idx)
-		}
-	})
-}
-
-func TestCheckValueLength(t *testing.T) {
-	t.Run("Run test for CheckValueLength Method", func(t *testing.T) {
-		var store storage.Storage
-		store.Value = "askdhaskdjhkashdkahsdkjahsdkjhad"
-		err := CheckValueLength(&store)
-		if err != nil {
-			t.Error("CheckValueLength must return nil")
-		}
-		store.Value = long512String
-		err = CheckValueLength(&store)
-		if err != nil {
-			t.Errorf("%v", len(store.Value))
-			t.Error("CheckValueLength must return nil")
-		}
-		store.Value = longString
-		err = CheckValueLength(&store)
-		if err == nil {
-			t.Error("CheckValueLength must return error")
 		}
 	})
 }

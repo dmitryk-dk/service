@@ -2,7 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -45,15 +44,26 @@ var testDeleteData = []testStorageStruct{
 	testStorageStruct{"set", "", "my_key_2", "value not found", ""},
 }
 
-func ErrorContains(out string, want string) bool {
-	if out == "" {
-		return want == ""
-	}
-	if want == "" {
-		return false
-	}
-	return strings.Contains(out, want)
-}
+var long512String = `asdhgahsdjahsdjahdahsdahsghgdsjfhasdjfhgajhsdgfj
+kahsdgfjahsgdfjhasgdfjhgasjfhgashdgakshgdakjhsgdjahdsgf
+jhagsdfjhgajskhdgfkajshdgfkahjsgdkjfhagsdkjhfgkashdgfkah
+sgdfkjhagsdkfhgajhdgjjahgsdfjhgasdjfhgasjhdgfajhsgdfkjhasgdas
+fjhgaksdhjgfashdfglSJFGALSDHJFGAJSHFGasjhdgfkahjsgdfkhagsdkj
+fhgakshjdfgkahsgdfkhagskdfhgakjshdgfkjahgsdkfhagskdfhg
+akjshdgfkjahfasdfjhagsdfkjhgaksjdhgfkajhsgdfkjhasgdfkjhgask
+jdhfgkjashgdfkjahsgdfkjhgaskdjfhgkajshdgfkjahsgdfkjhagjsdfgasdfash
+dfgkjasghdfjkhagskdjfhgakjshdgfkjhagsdkfjhgak`
+
+var longString = `asdhgahsdjahsdjahdahsdahsghgdsjfhasdjfhgajhsdgfj
+kahsdgfjahsgdfjhasgdfjhgasjfhgashdgakshgdakjhsgdjahdsgf
+jhagsdfjhgajskhdgfkajshdgfkahjsgdkjfhagsdkjhfgkashdgfkah
+sgdfkjhagsdkfhgajhdgjjahgsdfjhgasdjfhgasjhdgfajhsgdfkjhasgdas
+fjhgaksdhjgfashdfglSJFGALSDHJFGAJSHFGasjhdgfkahjsgdfkhagsdkj
+fhgakshjdfgkahsgdfkhagskdfhgakjshdgfkjahgsdkfhagskdfhg
+akjshdgfkjahfasdfjhagsdfkjhgaksjdhgfkajhsgdfkjhasgdfkjhgask
+jdhfgkjashgdfkjahsgdfkjhgaskdjfhgkajshdgfkjahsgdfkjhagjsdfgasdfash
+dfgkjasghdfjkhagskdjfhgakjshdgfkjhagsdkfjhgakjshdfgkj_`
+
 func TestSet(t *testing.T) {
 	checkSet := func(t *testing.T, data testStorageStruct) {
 		t.Helper()
@@ -156,4 +166,26 @@ func TestDelete(t *testing.T) {
 		})
 	}
 	fmt.Printf("** TestDelete - ALL PASSED (number of test cases: %d)**\n", len(testGetData))
+}
+
+func TestCheckValueLength(t *testing.T) {
+	t.Run("Run test for CheckValueLength Method", func(t *testing.T) {
+		store := Storage{}
+		store.Value = "askdhaskdjhkashdkahsdkjahsdkjhad"
+		ok := store.CheckValueLength(512)
+		if ok {
+			t.Error("CheckValueLength must return true")
+		}
+		store.Value = long512String
+		ok = store.CheckValueLength(512)
+		if ok {
+			t.Errorf("%v", len(store.Value))
+			t.Error("CheckValueLength must return false")
+		}
+		store.Value = longString
+		ok = store.CheckValueLength(512)
+		if !ok {
+			t.Error("CheckValueLength must return true")
+		}
+	})
 }

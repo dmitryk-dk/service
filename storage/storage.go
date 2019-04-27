@@ -1,10 +1,11 @@
 package storage
 
-const (
-	ErrNotFound   = "value not found"
-	ErrKeyTooLong = "key too long"
-	ErrKeyNotSet  = "key not set"
-	Success       = "success"
+var (
+	ErrNotFound     = "value not found"
+	ErrKeyTooLong   = "key too long"
+	ErrKeyNotSet    = "key not set"
+	ErrValueTooLong = "value too long"
+	Success         = "success"
 )
 
 type Storage struct {
@@ -26,6 +27,7 @@ func (s *Storage) Set() *Storage {
 		return s
 	}
 	DbStorage[s.Key] = s.Value
+	s.Value = ""
 	s.Result = Success
 	return s
 }
