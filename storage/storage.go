@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
@@ -23,79 +22,78 @@ type Storage struct {
 	Result string `json:"result,omitempty"`
 }
 
-type errorString struct {
-	s string
-}
-
-func (e errorString) String() string {
-	return e.s
-}
-
 var DbStorage = map[string]string{}
 
+// SetDefaultValues set values to default state
+func (s *Storage) SetDefaultValues() {
+	s.Error = ""
+	s.Result = ""
+}
+
 // Set function save data to storage
-func (s *Storage) Set() *Storage {
-	err := CheckDbErrors(s.Key, s.Value)
+func (s *Storage) Set() error {
+	s.SetDefaultValues()
+	err := CheckDbLenght()
 	if err != nil {
-		s.Value = ""
+		return err
+	}
+	err = CheckDbErrors(s.Key, s.Value)
+	if err != nil {
 		s.Error = err.Error()
-		return s
+		return err
 	}
 	DbStorage[s.Key] = s.Value
-	s.Value = ""
 	s.Result = Success
-	return s
+	return nil
 }
 
 // Get function recieve data from storage
-func (s *Storage) Get() *Storage {
+func (s *Storage) Get() error {
+	s.SetDefaultValues()
 	err := CheckDbErrors(s.Key, s.Value)
 	if err != nil {
-		s.Value = ""
 		s.Error = err.Error()
-		return s
+		return err
 	}
 	if _, ok := DbStorage[s.Key]; ok {
 		s.Value = DbStorage[s.Key]
 	} else {
 		s.Error = ErrNotFound.Error()
 	}
-	return s
+	return nil
 }
 
 // Delete function remove data from storage
-func (s *Storage) Delete() *Storage {
+func (s *Storage) Delete() error {
+	s.SetDefaultValues()
 	err := CheckDbErrors(s.Key, s.Value)
 	if err != nil {
-		s.Value = ""
 		s.Error = err.Error()
-		return s
+		return err
 	}
 	if _, ok := DbStorage[s.Key]; ok {
-		fmt.Printf("is ok ->> %v", ok)
 		delete(DbStorage, s.Key)
 		s.Result = Success
-		return s
+		return nil
 	}
 	s.Error = ErrNotFound.Error()
-	fmt.Printf("delete ->> %v \n", s)
-	return s
+	return nil
 }
 
 // Exist check is key present in map
-func (s *Storage) Exist() *Storage {
+func (s *Storage) Exist() error {
+	s.SetDefaultValues()
 	err := CheckDbErrors(s.Key, s.Value)
 	if err != nil {
-		s.Value = ""
 		s.Error = err.Error()
-		return s
+		return err
 	}
 	if _, ok := DbStorage[s.Key]; ok {
 		s.Result = Success
 	} else {
 		s.Error = ErrNotFound.Error()
 	}
-	return s
+	return nil
 }
 
 // RequestMethod return method which income in request
@@ -104,8 +102,8 @@ func (s Storage) RequestMethod() string {
 }
 
 // CheckDbLenght return value of keys in DbStorage
-func (s Storage) CheckDbLenght() error {
-	if len(DbStorage) > 1024 {
+func CheckDbLenght() error {
+	if len(DbStorage) >= 1024 {
 		return ErrDbLentgh
 	}
 	return nil

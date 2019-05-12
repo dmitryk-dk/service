@@ -9,8 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/dmitryk-dk/service/storage"
 )
 
 type Server struct {
@@ -19,12 +17,11 @@ type Server struct {
 }
 
 type Storager interface {
-	Get() *storage.Storage
-	Set() *storage.Storage
-	Delete() *storage.Storage
-	Exist() *storage.Storage
+	Get() error
+	Set() error
+	Delete() error
+	Exist() error
 	RequestMethod() string
-	CheckDbLenght() error
 }
 
 // ListenAndServ function run http server
@@ -47,8 +44,10 @@ func NewConfig(host *string, port *int) *Server {
 }
 
 // Routes handle routes requests
-func Routes() {
-	http.HandleFunc("/", HandleRootReuest)
+func Routes(store Storager) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		HandleRootReuest(w, r, store)
+	})
 }
 
 func checkRequest(w http.ResponseWriter, r *http.Request) {
@@ -63,9 +62,9 @@ func checkRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 // Values handle request to root path
-func HandleRootReuest(w http.ResponseWriter, r *http.Request) {
+func HandleRootReuest(w http.ResponseWriter, r *http.Request, store Storager) {
 	checkRequest(w, r)
-	var store Storager = new(storage.Storage)
+	//var store Storager = new(storage.Storage)
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -73,7 +72,7 @@ func HandleRootReuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = json.Unmarshal(body, &store); err != nil {
+	if err = json.Unmarshal(body, store); err != nil {
 		http.Error(w, "Error json format", http.StatusInternalServerError)
 		return
 	}
@@ -85,58 +84,39 @@ func HandleRootReuest(w http.ResponseWriter, r *http.Request) {
 func HandleMethodRequest(w http.ResponseWriter, store Storager) {
 	switch store.RequestMethod() {
 	case "get":
-		Get(w, store)
+		err := store.Get()
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		SendData(w, store)
 	case "set":
-		Set(w, store)
+		err := store.Set()
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		SendData(w, store)
 	case "delete":
-		Delete(w, store)
+		err := store.Delete()
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		SendData(w, store)
 	case "exist":
-		Exist(w, store)
+		err := store.Exist()
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		SendData(w, store)
 	}
 }
 
 // Get function write response on get method
-func Get(w http.ResponseWriter, store Storager) {
-	sendingData := store.Get()
-	data, err := json.Marshal(sendingData)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	w.Write(data)
-}
-
-// Set function set data to Db and write response
-func Set(w http.ResponseWriter, store Storager) {
-	err := store.CheckDbLenght()
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	sendingData := store.Set()
-	data, err := json.Marshal(sendingData)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	w.Write(data)
-}
-
-// Delete function delete data from Db
-func Delete(w http.ResponseWriter, store Storager) {
-	sendingData := store.Delete()
-	data, err := json.Marshal(sendingData)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	w.Write(data)
-}
-
-// Exist function check if key present in db
-func Exist(w http.ResponseWriter, store Storager) {
-	sendingData := store.Exist()
-	data, err := json.Marshal(sendingData)
+func SendData(w http.ResponseWriter, store Storager) {
+	data, err := json.Marshal(store)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return

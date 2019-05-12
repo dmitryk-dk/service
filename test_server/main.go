@@ -39,7 +39,7 @@ func Set() {
 
 func Get() {
 	for i := 0; i <= 3; i++ {
-		values := map[string]string{"method": "get", "key": "EdScSmEWxIlSDgPu"}
+		values := map[string]string{"method": "get", "key": "stCNPzrORqTJGeAJ"}
 		jsonData, _ := json.Marshal(values)
 		req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", strings.NewReader(string(jsonData)))
 		client := &http.Client{}
@@ -56,7 +56,7 @@ func Get() {
 
 func Del() {
 	for i := 0; i <= 3; i++ {
-		values := map[string]string{"method": "delete", "key": "JbSAAyRIiFjsQTNU"}
+		values := map[string]string{"method": "delete", "key": "HhhaRdeqEdMNXvgt"}
 		jsonData, _ := json.Marshal(values)
 		req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", strings.NewReader(string(jsonData)))
 		client := &http.Client{}
@@ -72,5 +72,5 @@ func Del() {
 }
 
 func main() {
-	Del()
+	Get()
 }
