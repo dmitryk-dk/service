@@ -18,6 +18,15 @@ type Server struct {
 	Port int
 }
 
+type Storager interface {
+	Get() *storage.Storage
+	Set() *storage.Storage
+	Delete() *storage.Storage
+	Exist() *storage.Storage
+	RequestMethod() string
+	CheckDbLenght() error
+}
+
 // ListenAndServ function run http server
 func (s *Server) ListenAndServ() {
 	addr := fmt.Sprintf("%s:%d", s.Host, s.Port)
@@ -39,7 +48,7 @@ func NewConfig(host *string, port *int) *Server {
 
 // Routes handle routes requests
 func Routes() {
-	http.HandleFunc("/", Values)
+	http.HandleFunc("/", HandleRootReuest)
 }
 
 func checkRequest(w http.ResponseWriter, r *http.Request) {
@@ -54,9 +63,9 @@ func checkRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 // Values handle request to root path
-func Values(w http.ResponseWriter, r *http.Request) {
+func HandleRootReuest(w http.ResponseWriter, r *http.Request) {
 	checkRequest(w, r)
-	var store storage.Storage
+	var store Storager = new(storage.Storage)
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -64,29 +73,17 @@ func Values(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.Unmarshal(body, &store)
-	if err != nil {
+	if err = json.Unmarshal(body, &store); err != nil {
 		http.Error(w, "Error json format", http.StatusInternalServerError)
 		return
 	}
-	ok := store.CheckValueLength(512)
-	if ok {
-		store.Error = storage.ErrValueTooLong
-		store.Value = ""
-		data, err := json.Marshal(store)
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		w.Write(data)
-		return
-	}
-	HandleMethodRequest(w, &store)
+
+	HandleMethodRequest(w, store)
 }
 
 // HandleMethodRequest handle methods from request body
-func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
-	switch store.Method {
+func HandleMethodRequest(w http.ResponseWriter, store Storager) {
+	switch store.RequestMethod() {
 	case "get":
 		Get(w, store)
 	case "set":
@@ -99,7 +96,7 @@ func HandleMethodRequest(w http.ResponseWriter, store *storage.Storage) {
 }
 
 // Get function write response on get method
-func Get(w http.ResponseWriter, store *storage.Storage) {
+func Get(w http.ResponseWriter, store Storager) {
 	sendingData := store.Get()
 	data, err := json.Marshal(sendingData)
 	if err != nil {
@@ -110,23 +107,23 @@ func Get(w http.ResponseWriter, store *storage.Storage) {
 }
 
 // Set function set data to Db and write response
-func Set(w http.ResponseWriter, store *storage.Storage) {
-	if store.CheckDbLenght() < 1024 {
-		sendingData := store.Set()
-		data, err := json.Marshal(sendingData)
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		w.Write(data)
-	} else {
+func Set(w http.ResponseWriter, store Storager) {
+	err := store.CheckDbLenght()
+	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+	sendingData := store.Set()
+	data, err := json.Marshal(sendingData)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
 }
 
 // Delete function delete data from Db
-func Delete(w http.ResponseWriter, store *storage.Storage) {
+func Delete(w http.ResponseWriter, store Storager) {
 	sendingData := store.Delete()
 	data, err := json.Marshal(sendingData)
 	if err != nil {
@@ -137,7 +134,7 @@ func Delete(w http.ResponseWriter, store *storage.Storage) {
 }
 
 // Exist function check if key present in db
-func Exist(w http.ResponseWriter, store *storage.Storage) {
+func Exist(w http.ResponseWriter, store Storager) {
 	sendingData := store.Exist()
 	data, err := json.Marshal(sendingData)
 	if err != nil {

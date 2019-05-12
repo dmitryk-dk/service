@@ -14,34 +14,34 @@ type testStorageStruct struct {
 }
 
 var testSetData = []testStorageStruct{
-	testStorageStruct{"set", "my_value_for_empty_key", "", "key not set", ""},
-	testStorageStruct{"set", "my_value_for_long_key", "my_very_long_key_10000000", "key too long", ""},
+	testStorageStruct{"set", "my_value_for_empty_key", "", ErrKeyNotSet.Error(), ""},
+	testStorageStruct{"set", "my_value_for_long_key", "my_very_long_key_10000000", ErrKeyTooLong.Error(), ""},
 	testStorageStruct{"set", "my_value_for_key_1", "my_key_1", "", "success"},
 	testStorageStruct{"set", "", "my_key_2", "", "success"},
 	testStorageStruct{"set", "my_value_for_key_3", "my_key_3", "", "success"},
 }
 
 var testGetData = []testStorageStruct{
-	testStorageStruct{"get", "my_value_for_empty_key", "", "key not set", ""},
-	testStorageStruct{"get", "my_value_for_key_1", "my_key_1", "my_value_for_key_1", ""},
+	testStorageStruct{"get", "my_value_for_empty_key", "", ErrKeyNotSet.Error(), ""},
+	testStorageStruct{"get", "my_value_for_key_1", "my_key_1", "", "my_value_for_key_1"},
 	testStorageStruct{"get", "", "my_key_2", "", ""},
-	testStorageStruct{"get", "", "qwertyuiopasdfghaa", "key too long", ""},
-	testStorageStruct{"get", "some_value", "qwertyuiopasdfghaa", "key too long", ""},
+	testStorageStruct{"get", "", "qwertyuiopasdfghaa", ErrKeyTooLong.Error(), ""},
+	testStorageStruct{"get", "some_value", "qwertyuiopasdfghaa", ErrKeyTooLong.Error(), ""},
 }
 
 var testExistData = []testStorageStruct{
-	testStorageStruct{"exist", "my_value_for_empty_key", "", "key not set", ""},
+	testStorageStruct{"exist", "my_value_for_empty_key", "", ErrKeyNotSet.Error(), ""},
 	testStorageStruct{"exist", "my_value_for_key_1", "my_key_1", "", "success"},
 	testStorageStruct{"exist", "", "my_key_2", "", "success"},
-	testStorageStruct{"exist", "", "qwertyuiopasdfghaa", "key too long", ""},
-	testStorageStruct{"exist", "some_value", "qwertyuiopasdfghaa", "key too long", ""},
+	testStorageStruct{"exist", "", "qwertyuiopasdfghaa", ErrKeyTooLong.Error(), ""},
+	testStorageStruct{"exist", "some_value", "qwertyuiopasdfghaa", ErrKeyTooLong.Error(), ""},
 }
 
 var testDeleteData = []testStorageStruct{
-	testStorageStruct{"set", "my_value_for_empty_key", "", "key not set", ""},
-	testStorageStruct{"set", "my_value_for_long_key", "my_very_long_key_10000000", "key too long", ""},
+	testStorageStruct{"set", "my_value_for_empty_key", "", ErrKeyNotSet.Error(), ""},
+	testStorageStruct{"set", "my_value_for_long_key", "my_very_long_key_10000000", ErrKeyTooLong.Error(), ""},
 	testStorageStruct{"set", "my_value_for_key_1", "my_key_1", "", "success"},
-	testStorageStruct{"set", "", "my_key_2", "value not found", ""},
+	testStorageStruct{"set", "", "my_key_2", ErrNotFound.Error(), ""},
 }
 
 var long512String = `asdhgahsdjahsdjahdahsdahsghgdsjfhasdjfhgajhsdgfj
@@ -171,20 +171,20 @@ func TestDelete(t *testing.T) {
 func TestCheckValueLength(t *testing.T) {
 	t.Run("Run test for CheckValueLength Method", func(t *testing.T) {
 		store := Storage{}
+
 		store.Value = "askdhaskdjhkashdkahsdkjahsdkjhad"
-		ok := store.CheckValueLength(512)
-		if ok {
+		if err := CheckValueLength(store.Value, 512); err != nil {
 			t.Error("CheckValueLength must return true")
 		}
+
 		store.Value = long512String
-		ok = store.CheckValueLength(512)
-		if ok {
+		if err := CheckValueLength(store.Value, 512); err != nil {
 			t.Errorf("%v", len(store.Value))
 			t.Error("CheckValueLength must return false")
 		}
+
 		store.Value = longString
-		ok = store.CheckValueLength(512)
-		if !ok {
+		if err := CheckValueLength(store.Value, 512); err == nil {
 			t.Error("CheckValueLength must return true")
 		}
 	})
