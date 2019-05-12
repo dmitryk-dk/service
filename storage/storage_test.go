@@ -72,11 +72,13 @@ func TestSet(t *testing.T) {
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		storage := store.Set()
-		if storage.Error != data.Error {
-			t.Errorf("errStr '%v'; data.Error '%v';", storage.Error, data.Error)
+		err := store.Set()
+		if err != nil {
+			if store.Error != data.Error {
+				t.Errorf("errStr '%v'; data.Error '%v';", store.Error, data.Error)
+			}
 		}
-		if storage.Error == "" {
+		if err == nil {
 			if DbStorage[data.Key] != data.Value {
 				t.Errorf("DbStorage value '%v'; test data value '%v'", DbStorage[data.Key], data.Value)
 			}
@@ -98,15 +100,15 @@ func TestGet(t *testing.T) {
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		storage := store.Get()
-		if storage.Error != "" {
-			if storage.Error != data.Error {
-				t.Errorf("Error in get method was '%v'; want '%v'", storage.Error, data.Error)
+		err := store.Get()
+		if err != nil {
+			if store.Error != data.Error {
+				t.Errorf("Error in get method was '%v'; want '%v'", store.Error, data.Error)
 			}
 		}
-		if storage.Error == "" {
-			if storage.Value != data.Value {
-				t.Errorf("Value getted from db '%v'; value from test '%v", storage.Value, data.Value)
+		if err == nil {
+			if store.Value != data.Value {
+				t.Errorf("Value getted from db '%v'; value from test '%v", store.Value, data.Value)
 			}
 		}
 	}
@@ -126,13 +128,15 @@ func TestExist(t *testing.T) {
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		storage := store.Exist()
-		if storage.Error != "" && storage.Error != data.Error {
-			t.Errorf("Error in exist methos was '%v'; want '%v'; key '%v'", storage.Error, data.Error, data.Key)
+		err := store.Exist()
+		if err != nil {
+			if store.Error != "" && store.Error != data.Error {
+				t.Errorf("Error in exist methos was '%v'; want '%v'; key '%v'", store.Error, data.Error, data.Key)
+			}
 		}
-		if storage.Error == "" {
-			if storage.Result != data.Result {
-				t.Errorf("Exist result was '%v'; want '%v'", storage.Result, data.Result)
+		if err == nil {
+			if store.Result != data.Result {
+				t.Errorf("Exist result was '%v'; want '%v'", store.Result, data.Result)
 			}
 		}
 	}
@@ -152,12 +156,16 @@ func TestDelete(t *testing.T) {
 			Value:  data.Value,
 			Key:    data.Key,
 		}
-		storage := store.Delete()
-		if storage.Result != "success" && storage.Error != data.Error {
-			t.Errorf("Error in delete methis was '%v'; want '%v';", storage.Error, data.Error)
+		err := store.Delete()
+		if err != nil {
+			if store.Error != data.Error {
+				t.Errorf("Error in delete methis was '%v'; want '%v';", store.Error, data.Error)
+			}
 		}
-		if storage.Error == "" && storage.Result != "success" {
-			t.Error("Method delete not remove data from Db")
+		if err == nil {
+			if store.Result != "success" {
+				t.Error("Method delete not remove data from Db")
+			}
 		}
 	}
 	for _, v := range testDeleteData {
