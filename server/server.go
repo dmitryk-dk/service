@@ -82,36 +82,22 @@ func HandleRootReuest(w http.ResponseWriter, r *http.Request, store Storager) {
 
 // HandleMethodRequest handle methods from request body
 func HandleMethodRequest(w http.ResponseWriter, store Storager) {
+	var err error
 	switch store.RequestMethod() {
 	case "get":
-		err := store.Get()
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		SendData(w, store)
+		err = store.Get()
 	case "set":
-		err := store.Set()
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		SendData(w, store)
+		err = store.Set()
 	case "delete":
-		err := store.Delete()
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		SendData(w, store)
+		err = store.Delete()
 	case "exist":
-		err := store.Exist()
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		SendData(w, store)
+		err = store.Exist()
 	}
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	SendData(w, store)
 }
 
 // Get function write response on get method
