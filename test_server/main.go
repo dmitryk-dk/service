@@ -72,5 +72,5 @@ func Del() {
 }
 
 func main() {
-	Get()
+	Set()
 }
